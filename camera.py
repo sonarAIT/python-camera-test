@@ -5,29 +5,25 @@ Camera Test
 import numpy as np
 import cv2
 
-# cap = cv2.VideoCapture('D:\\Work_Documents\\sandbox\\OpenCV\\with_EEN\\viaVLC\\EN-CDUM-002a+2016-08-29+14-38-40.mp4') #Open video file
 cap = cv2.VideoCapture('movie.mp4')
-# cap = cv2.VideoCapture('http://127.0.0.1:8080')
 
-fps = 15  # int(cap.get(5)+4)
-print('Current FPS is ' + str(fps))
-# cv2.ocl.setUseOpenCL(False)
-fgbg = cv2.createBackgroundSubtractorKNN(
-    detectShadows=True)  # Create the background substractor
+FPS = 15
+print('Current FPS is ' + str(FPS))
+# 移動体検出用のアルゴリズムを選択している
+# MOG2とKNNの二種類ある
+# 好きなほうを選んでね♡
+fgbg = cv2.createBackgroundSubtractorKNN(detectShadows=True)
+# fgbg = cv2.createBackgroundSubtractorMOG2(detectShadows=True)
 
-# initialize var and windows
+
 itr = 0
 crossed = 0
 font = cv2.FONT_HERSHEY_SIMPLEX
+# numpy.emptyは未初期化の配列を返す関数
+# 0×2の配列をセット(2個のかたまりが0個あると考えればよい)
 old_center = np.empty((0, 2), float)
-'''
-cv2.namedWindow("Frame", cv2.WINDOW_KEEPRATIO | cv2.WINDOW_NORMAL)
-cv2.namedWindow("Background Substraction",
-                cv2.WINDOW_KEEPRATIO | cv2.WINDOW_NORMAL)
-cv2.namedWindow("Contours", cv2.WINDOW_KEEPRATIO | cv2.WINDOW_NORMAL)
-'''
 
-# define functions
+# 以下、関数定義
 
 
 def padding_position(x, y, w, h, p):
@@ -145,7 +141,7 @@ while(cap.isOpened()):
 
         for c in contours:
 
-            if (itr % fps == 0):
+            if (itr % FPS == 0):
                 continue
 
             # calc the area
@@ -168,7 +164,7 @@ while(cap.isOpened()):
             if (old_center.size > 1):
                 # print cArea and new center point
                 print('Loop: ' + str(itr) +
-                    '   Coutours #: ' + str(len(contours)))
+                      '   Coutours #: ' + str(len(contours)))
                 print('New Center :' + str(cx) + ',' + str(cy))
                 # print 'New Center :' + str(new_center)
 
@@ -179,7 +175,7 @@ while(cap.isOpened()):
                 if (cv2.pointPolygonTest(c, (old_point_t[0], old_point_t[1]), True) > 0):
                     old_point = old_point_t
                     print('Old Center :' +
-                        str(int(old_point[0])) + ',' + str(int(old_point[1])))
+                          str(int(old_point[0])) + ',' + str(int(old_point[1])))
 
                     # put line between old_center to new_center
                     cv2.line(frame, (int(old_point[0]), int(
@@ -199,7 +195,7 @@ while(cap.isOpened()):
 
             # draw rectangle or contour
             cv2.rectangle(frame, (x, y), (x + w, y + h),
-                        (0, 255, 0), 3)  # rectangle contour
+                          (0, 255, 0), 3)  # rectangle contour
     #            cv2.drawContours(frame, [c], 0, (0,255,0), 2)
     #            cv2.polylines(frame, [c], True, (0,255,0), 2)
 
