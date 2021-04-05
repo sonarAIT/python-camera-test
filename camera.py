@@ -148,7 +148,7 @@ while(cap.isOpened()):
             cv2.MORPH_ELLIPSE, (3, 3)), iterations=2)
 
         # 二値画像から輪郭を検出
-        # contoursは輪郭画像, hierarchyは輪郭(list)
+        # contoursは輪郭(list), hierarchyは輪郭の階層情報(未使用)
         contours, hierarchy = cv2.findContours(
             fgmask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
