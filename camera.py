@@ -72,7 +72,7 @@ def centroidPL(cnt):
     return cx, cy
 
 
-# display 1st frame and set counting line
+# 最初の画面描画
 ret, img = cap.read()
 img = cv2.putText(img, 'Please draw a line with drug the mouse.',
                   (int(img.shape[1]/2-300), int(img.shape[0]/2)), font, 1, (0, 0, 255), 2, cv2.LINE_AA)
@@ -82,11 +82,13 @@ img = cv2.putText(img, 'Retry, press "r".',
                   (int(img.shape[1]/2-300), int(img.shape[0]/2+80)), font, 1, (0, 0, 255), 2, cv2.LINE_AA)
 img = cv2.resize(img, (int(img.shape[1]/2), int(img.shape[0]/2)))
 imgr = img.copy()
+# sx,sy,ex,eyをここで初期化
 sx, sy = -1, -1
 ex, ey = -1, -1
 
 
 def draw_line(event, x, y, flags, param):
+    # グローバル変数であるsx, sy, ex, eyに代入するために宣言
     global sx, sy, ex, ey
 
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -97,7 +99,9 @@ def draw_line(event, x, y, flags, param):
         ex, ey = x, y
 
 
+# ウィンドウの名前をDraw_Lineに変更
 cv2.namedWindow('Draw_Line')
+# マウスを使うとdraw_line関数が呼び出される(draw_line関数は上で定義されている)
 cv2.setMouseCallback('Draw_Line', draw_line)
 
 while(1):
@@ -114,25 +118,37 @@ cv2.destroyAllWindows()
 # initialize line
 lp0 = (sx, sy)
 lp1 = (ex, ey)
+# 一次元配列nlp0を生成
+# [sx, sy]が中身となる
 nlp0 = np.array([lp0[0], lp0[1]], float)
+# 一次元配列nlp1を生成
+# [ex, ey]が中身となる
 nlp1 = np.array([lp1[0], lp1[1]], float)
 
 while(cap.isOpened()):
     try:
-        ret, o_frame = cap.read()  # read a frame
+        # 1フレームを画像として読み込み
+        ret, o_frame = cap.read()
+        # フレームサイズを実際のデータの半分にしている
+        # o_frame.shapeは画面のサイズの配列 [Width, Height]
+        # 一方 resize関数には高さ,横幅の順で入れるようだ
         frame = cv2.resize(
             o_frame, (int(o_frame.shape[1]/2), int(o_frame.shape[0]/2)))
 
-        # Use the substractor
+        # 前景領域のマスクを取得する
         fgmask = fgbg.apply(frame)
         fgmask_o = fgmask.copy()
 
+        # しきい値で画像を二値画像に変換
+        # グレースケール(モノクロ写真のような感じ)から完全に黒か白に変換しているということだ
+        # この関数は返り値が二つある 二値画像である後者を使用するので[1]を指定
         fgmask = cv2.threshold(fgmask, 244, 255, cv2.THRESH_BINARY)[1]
-        kernel = np.ones((5, 5), np.uint8)
-    #        fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, kernel)
+        # 二値画像の白い部分を膨張させている
         fgmask = cv2.dilate(fgmask, cv2.getStructuringElement(
             cv2.MORPH_ELLIPSE, (3, 3)), iterations=2)
 
+        # 二値画像から輪郭を検出
+        # contoursは輪郭画像, hierarchyは輪郭(list)
         contours, hierarchy = cv2.findContours(
             fgmask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
