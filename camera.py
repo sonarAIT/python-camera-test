@@ -1,5 +1,6 @@
 """
 Camera Test
+2021/04/06 より良い方法を発見したため、ソースコードの解説を中止。
 """
 
 import numpy as np
@@ -57,8 +58,7 @@ def isIntersect(ap1, ap2, bp1, bp2):
 
 
 def convHull(cnt):
-    epsilon = 0.1*cv2.arcLength(cnt, True)
-    approx = cv2.approxPolyDP(cnt, epsilon, True)
+    # 輪郭を凸包（ぴっちりと包み込むような感じ）に変換
     hull = cv2.convexHull(cnt, returnPoints=True)
     return hull
 
@@ -66,7 +66,9 @@ def convHull(cnt):
 
 
 def centroidPL(cnt):
+    # 凸包輪郭から画像モーメントを取得
     M = cv2.moments(cnt)
+    # 凸包輪郭の重心を求める
     cx = int(M['m10']/M['m00'])
     cy = int(M['m01']/M['m00'])
     return cx, cy
@@ -152,29 +154,34 @@ while(cap.isOpened()):
         contours, hierarchy = cv2.findContours(
             fgmask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        # initialize var iteration
+        # 0×2の配列をセット(2個のかたまりが0個あると考えればよい)
+        # new_centerは物体の重心座標を保持するlist
         new_center = np.empty((0, 2), float)
 
+        # 存在する輪郭の数だけforを回す
         for c in contours:
 
             if (itr % FPS == 0):
                 continue
 
-            # calc the area
+            # 輪郭の面積を取得
             cArea = cv2.contourArea(c)
+            # 一定面積より小さければ飛ばす
             if cArea < 300:  # if 1280x960 set to 50000, 640x480 set to 12500
                 continue
 
-            # apply the convex hull
+            # 凸包の輪郭を求める
             c = convHull(c)
 
-            # rectangle area
+            # 外接矩形を求める(物体を包み込む長方形)
             x, y, w, h = cv2.boundingRect(c)
+            # 面積をちょっと盛る
             x, y, w, h = padding_position(x, y, w, h, 5)
 
-            # center point
+            # 凸包輪郭の重心座標を求める
             cx, cy = centroidPL(c)
             new_point = np.array([cx, cy], float)
+            # new_centerにもとめた重心座標を追加
             new_center = np.append(new_center, np.array([[cx, cy]]), axis=0)
 
             if (old_center.size > 1):
@@ -184,10 +191,11 @@ while(cap.isOpened()):
                 print('New Center :' + str(cx) + ',' + str(cy))
                 # print 'New Center :' + str(new_center)
 
-                # calicurate nearest old center point
+                # old_center(list)の中から最もnew_pointに近い座標を取り出す
                 old_point_t = serchNN(new_point, old_center)
 
-                # check the old center point in the counding box
+                # pointPolygonTestは輪郭と点の最短距離を求める関数
+                # 距離が0でなければ、即ちold_point_tとcは別の座標ということになる
                 if (cv2.pointPolygonTest(c, (old_point_t[0], old_point_t[1]), True) > 0):
                     old_point = old_point_t
                     print('Old Center :' +
