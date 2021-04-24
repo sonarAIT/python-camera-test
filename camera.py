@@ -1,6 +1,5 @@
 """
 Camera Test
-2021/04/06 より良い方法を発見したため、ソースコードの解説を中止。
 """
 
 import numpy as np
